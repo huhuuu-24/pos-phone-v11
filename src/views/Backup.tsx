@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { exportDatabase, importDatabase } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
+import { Cloud, Download, Upload } from 'lucide-react';
 
 export default function Backup() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [backupInfo, setBackupInfo] = useState<any>(null);
   const [error, setError] = useState('');
+  const [cloudLoading, setCloudLoading] = useState(false);
 
   const handleExport = async () => {
     try {
@@ -28,10 +31,50 @@ export default function Backup() {
 
       URL.revokeObjectURL(url);
 
-      alert('备份成功');
+      alert('本地备份成功');
     } catch (err) {
       console.error(err);
       alert('备份失败，请重试');
+    }
+  };
+
+  const handleCloudBackup = async () => {
+    if (cloudLoading) return;
+
+    try {
+      setCloudLoading(true);
+
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        alert('登录状态已失效，请重新登录');
+        return;
+      }
+
+      const backupData = await exportDatabase();
+
+      const { error } = await supabase
+        .from('pos_backups')
+        .insert({
+          user_id: user.id,
+          backup_data: backupData,
+        });
+
+      if (error) {
+        console.error(error);
+        alert('云端备份失败：' + error.message);
+        return;
+      }
+
+      alert('☁️ 云端备份成功');
+    } catch (err) {
+      console.error(err);
+      alert('云端备份失败，请重试');
+    } finally {
+      setCloudLoading(false);
     }
   };
 
@@ -64,7 +107,7 @@ export default function Backup() {
         products: data.products.length,
         imeis: data.imeis.length,
         orders: data.orders.length,
-        data
+        data,
       });
     } catch (err) {
       console.error(err);
@@ -104,9 +147,32 @@ export default function Backup() {
           数据备份
         </h2>
 
+        {/* 云端备份 */}
         <div className="bg-slate-900 border border-slate-700/50 rounded-2xl p-6 mb-6">
-          <h3 className="text-white text-lg font-semibold mb-2">
-            导出备份
+          <h3 className="text-white text-lg font-semibold mb-2 flex items-center gap-2">
+            <Cloud size={20} className="text-blue-400" />
+            云端备份
+          </h3>
+
+          <p className="text-slate-400 text-sm mb-5">
+            将当前 POS 的商品、IMEI和历史订单安全备份到云端。
+          </p>
+
+          <button
+            onClick={handleCloudBackup}
+            disabled={cloudLoading}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <Upload size={18} />
+            {cloudLoading ? '正在备份...' : '立即备份到云端'}
+          </button>
+        </div>
+
+        {/* 本地导出 */}
+        <div className="bg-slate-900 border border-slate-700/50 rounded-2xl p-6 mb-6">
+          <h3 className="text-white text-lg font-semibold mb-2 flex items-center gap-2">
+            <Download size={20} className="text-green-400" />
+            本地备份
           </h3>
 
           <p className="text-slate-400 text-sm mb-5">
@@ -121,6 +187,7 @@ export default function Backup() {
           </button>
         </div>
 
+        {/* 本地恢复 */}
         <div className="bg-slate-900 border border-slate-700/50 rounded-2xl p-6">
           <h3 className="text-white text-lg font-semibold mb-2">
             恢复备份
