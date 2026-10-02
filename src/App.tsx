@@ -19,58 +19,97 @@ export default function App() {
     let mounted = true;
 
     const checkLogin = async () => {
+      // =========================
+      // 1. 检查本机是否有离线营业权限
+      // =========================
+      const offlineAccess =
+        localStorage.getItem(OFFLINE_ACCESS_KEY) === 'true';
+
+      // =========================
+      // 2. 如果明确没有网络
+      //    不要访问 Supabase
+      // =========================
+      if (!navigator.onLine) {
+        if (!mounted) return;
+
+        if (offlineAccess) {
+          setLoggedIn(true);
+        } else {
+          setLoggedIn(false);
+        }
+
+        setChecking(false);
+        return;
+      }
+
+      // =========================
+      // 3. 有网络时检查 Supabase
+      // =========================
       try {
-        const offlineAccess =
-          localStorage.getItem(OFFLINE_ACCESS_KEY) === 'true';
+        const sessionPromise = supabase.auth.getSession();
 
-        const isOnline = navigator.onLine;
+        // 最多等待 5 秒
+        const timeoutPromise = new Promise<null>((resolve) => {
+          setTimeout(() => resolve(null), 5000);
+        });
 
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
+        const result = await Promise.race([
+          sessionPromise,
+          timeoutPromise,
+        ]);
 
         if (!mounted) return;
 
-        // 有有效 Supabase Session
-        if (session) {
+        // Supabase 正常返回 Session
+        if (
+          result &&
+          'data' in result &&
+          result.data?.session
+        ) {
           setLoggedIn(true);
 
-          // 记录这台电脑已经获得过离线营业权限
+          // 记录本机已经成功登录过
           localStorage.setItem(
             OFFLINE_ACCESS_KEY,
             'true'
           );
-        }
-
-        // 没网络 + 以前成功登录过
-        else if (!isOnline && offlineAccess) {
-          // 允许离线进入 POS
+        } else if (offlineAccess) {
+          // Supabase 没有 Session，
+          // 但本机以前已经成功登录过
           setLoggedIn(true);
-        }
-
-        // 有网络但已经登出
-        else {
+        } else {
           setLoggedIn(false);
         }
 
         setChecking(false);
       } catch (error) {
-        console.error('检查登录状态失败:', error);
+        console.error(
+          'Supabase 登录状态检查失败:',
+          error
+        );
 
         if (!mounted) return;
 
-        const offlineAccess =
-          localStorage.getItem(OFFLINE_ACCESS_KEY) === 'true';
+        // =========================
+        // 4. Supabase 访问失败
+        //    只要本机有离线权限，
+        //    就直接进入 POS
+        // =========================
+        if (offlineAccess) {
+          setLoggedIn(true);
+        } else {
+          setLoggedIn(false);
+        }
 
-        // 如果检查 Supabase 失败，同时本机有离线授权
-        // 就允许进入 POS
-        setLoggedIn(offlineAccess);
         setChecking(false);
       }
     };
 
     checkLogin();
 
+    // =========================
+    // Supabase 登录状态监听
+    // =========================
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
@@ -94,6 +133,9 @@ export default function App() {
     };
   }, []);
 
+  // =========================
+  // 检查登录中
+  // =========================
   if (checking) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-950">
@@ -104,11 +146,14 @@ export default function App() {
     );
   }
 
+  // =========================
+  // 没有登录
+  // =========================
   if (!loggedIn) {
     return (
       <Login
         onLogin={() => {
-          // 登录成功后，记录本机离线营业权限
+          // 登录成功后获得本机离线营业权限
           localStorage.setItem(
             OFFLINE_ACCESS_KEY,
             'true'
@@ -120,14 +165,17 @@ export default function App() {
     );
   }
 
+  // =========================
+  // POS 主界面
+  // =========================
   return (
     <div className="flex h-screen bg-slate-950 overflow-hidden">
       <Sidebar
         current={view}
         onChange={setView}
         onLogout={() => {
-          // 注意：
-          // 登出账号，但不删除本机离线营业权限
+          // 只退出当前登录账号
+          // 不删除本机离线营业权限
           setLoggedIn(false);
         }}
       />
