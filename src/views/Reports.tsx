@@ -1,14 +1,36 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import {TrendingUp, DollarSign, ShoppingBag, Calendar, CreditCard, Banknote,
-  QrCode, RefreshCw, Filter, Download, Printer, X } from 'lucide-react';
+import {
+  TrendingUp,
+  DollarSign,
+  ShoppingBag,
+  Calendar,
+  CreditCard,
+  Banknote,
+  QrCode,
+  RefreshCw,
+  Filter,
+  Download,
+  Printer,
+  X,
+} from 'lucide-react';
 import * as XLSX from 'xlsx';
 
-import {getAllOrders, CATEGORY_LABELS, deleteOrder } from '@/lib/db';
+import {
+  getAllOrders,
+  CATEGORY_LABELS,
+  deleteOrder,
+} from '@/lib/db';
+
 import type {
   Order,
   PaymentMethod,
   ProductCategory,
 } from '@/types';
+
+import {
+  loadReceiptSettings,
+  type ReceiptSettings,
+} from '@/views/Settings';
 
 const CATEGORY_BADGE: Record<ProductCategory, string> = {
   phone: 'bg-blue-500/20 text-blue-400',
@@ -163,21 +185,14 @@ function exportExcel(orders: Order[]) {
       .toISOString()
       .slice(0, 10);
 
-    /*
-      使用 Blob + 下载链接，
-      比 XLSX.writeFile 更适合 Electron 环境。
-    */
     const excelBuffer = XLSX.write(workbook, {
       bookType: 'xlsx',
       type: 'array',
     });
 
-    const blob = new Blob(
-      [excelBuffer],
-      {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      }
-    );
+    const blob = new Blob([excelBuffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
 
     const url = URL.createObjectURL(blob);
 
@@ -248,6 +263,12 @@ export default function Reports() {
   const [reprintOrder, setReprintOrder] =
     useState<Order | null>(null);
 
+  // 读取当前店铺设置
+  const [receiptSettings, setReceiptSettings] =
+    useState<ReceiptSettings>(() =>
+      loadReceiptSettings()
+    );
+
   const load = useCallback(async () => {
     setLoading(true);
 
@@ -260,6 +281,11 @@ export default function Reports() {
             new Date(b.createdAt).getTime() -
             new Date(a.createdAt).getTime()
         )
+      );
+
+      // 每次刷新报表时重新读取店铺设置
+      setReceiptSettings(
+        loadReceiptSettings()
       );
     } finally {
       setLoading(false);
@@ -581,12 +607,25 @@ export default function Reports() {
               <div
                 style={{
                   textAlign: 'center',
-                  borderBottom:
-                    '2px solid #000',
+                  borderBottom: '2px solid #000',
                   paddingBottom: '10px',
                   marginBottom: '10px',
                 }}
               >
+
+                {receiptSettings.logoDataUrl && (
+                  <img
+                    src={receiptSettings.logoDataUrl}
+                    alt="Shop Logo"
+                    style={{
+                      maxWidth: '120px',
+                      maxHeight: '70px',
+                      objectFit: 'contain',
+                      margin: '0 auto 8px',
+                    }}
+                  />
+                )}
+
                 <div
                   style={{
                     fontSize: '20px',
@@ -594,35 +633,41 @@ export default function Reports() {
                     letterSpacing: '1px',
                   }}
                 >
-                  DREAM MOBILE ENTERPRISE
+                  {receiptSettings.shopName}
                 </div>
 
-                <div
-                  style={{
-                    fontSize: '10px',
-                    marginTop: '3px',
-                  }}
-                >
-                  SSM: 20260365286 (JM041516-D)
-                </div>
+                {receiptSettings.ssm && (
+                  <div
+                    style={{
+                      fontSize: '10px',
+                      marginTop: '3px',
+                    }}
+                  >
+                    SSM: {receiptSettings.ssm}
+                  </div>
+                )}
 
-                <div
-                  style={{
-                    fontSize: '10px',
-                    marginTop: '2px',
-                  }}
-                >
-                  160, Jalan Pantai, 34350 Kuala Kurau, Perak.
-                </div>
+                {receiptSettings.address && (
+                  <div
+                    style={{
+                      fontSize: '10px',
+                      marginTop: '2px',
+                    }}
+                  >
+                    {receiptSettings.address}
+                  </div>
+                )}
 
-                <div
-                  style={{
-                    fontSize: '10px',
-                    marginTop: '2px',
-                  }}
-                >
-                  Tel: 011-25804449
-                </div>
+                {receiptSettings.phone && (
+                  <div
+                    style={{
+                      fontSize: '10px',
+                      marginTop: '2px',
+                    }}
+                  >
+                    Tel: {receiptSettings.phone}
+                  </div>
+                )}
 
                 <div
                   style={{
@@ -631,7 +676,7 @@ export default function Reports() {
                     marginTop: '8px',
                   }}
                 >
-                  收银单 / RECEIPT (补印)
+                  {receiptSettings.receiptTitle} (补印)
                 </div>
               </div>
 
@@ -658,8 +703,7 @@ export default function Reports() {
                   付款方式:{' '}
                   {
                     PAY_NAMES[
-                      reprintOrder
-                        .paymentMethod
+                      reprintOrder.paymentMethod
                     ]
                   }
                 </div>
@@ -667,8 +711,7 @@ export default function Reports() {
 
               <div
                 style={{
-                  borderBottom:
-                    '1px dashed #999',
+                  borderBottom: '1px dashed #999',
                   marginBottom: '8px',
                 }}
               />
@@ -681,14 +724,12 @@ export default function Reports() {
                       fontSize: '11px',
                       marginBottom: '8px',
                       paddingBottom: '6px',
-                      borderBottom:
-                        '1px dotted #ccc',
+                      borderBottom: '1px dotted #ccc',
                     }}
                   >
                     <div
                       style={{
-                        fontWeight:
-                          'bold',
+                        fontWeight: 'bold',
                       }}
                     >
                       {item.brand}{' '}
@@ -715,8 +756,7 @@ export default function Reports() {
                       item.imei && (
                         <div
                           style={{
-                            fontWeight:
-                              'bold',
+                            fontWeight: 'bold',
                           }}
                         >
                           IMEI: {item.imei}
@@ -726,8 +766,7 @@ export default function Reports() {
                     <div
                       style={{
                         textAlign: 'right',
-                        fontWeight:
-                          'bold',
+                        fontWeight: 'bold',
                         marginTop: '2px',
                       }}
                     >
@@ -743,13 +782,11 @@ export default function Reports() {
 
               <div
                 style={{
-                  borderTop:
-                    '2px solid #000',
+                  borderTop: '2px solid #000',
                   paddingTop: '10px',
                   marginTop: '8px',
                   display: 'flex',
-                  justifyContent:
-                    'space-between',
+                  justifyContent: 'space-between',
                   fontSize: '16px',
                   fontWeight: 'bold',
                 }}
@@ -772,19 +809,20 @@ export default function Reports() {
                   fontSize: '9px',
                   color: '#666',
                   marginTop: '16px',
-                  borderTop:
-                    '1px dashed #999',
+                  borderTop: '1px dashed #999',
                   paddingTop: '10px',
                 }}
               >
-                <div
-                  style={{
-                    fontWeight: 'bold',
-                    marginBottom: '4px',
-                  }}
-                >
-                  Thank you for shopping with us!
-                </div>
+                {receiptSettings.thankYouText && (
+                  <div
+                    style={{
+                      fontWeight: 'bold',
+                      marginBottom: '4px',
+                    }}
+                  >
+                    {receiptSettings.thankYouText}
+                  </div>
+                )}
 
                 {reprintOrder.showWarranty &&
                   reprintOrder.warrantyText && (
@@ -806,24 +844,38 @@ export default function Reports() {
 
               <div className="text-center border-b-2 border-slate-800 pb-4 mb-5">
 
+                {receiptSettings.logoDataUrl && (
+                  <img
+                    src={receiptSettings.logoDataUrl}
+                    alt="Shop Logo"
+                    className="mx-auto mb-3 max-w-[120px] max-h-[70px] object-contain"
+                  />
+                )}
+
                 <h3 className="font-bold text-2xl text-slate-900 tracking-wide">
-                  DREAM MOBILE ENTERPRISE
+                  {receiptSettings.shopName}
                 </h3>
 
-                <p className="text-xs text-slate-500 mt-1.5">
-                  SSM: 20260365286 (JM041516-D)
-                </p>
+                {receiptSettings.ssm && (
+                  <p className="text-xs text-slate-500 mt-1.5">
+                    SSM: {receiptSettings.ssm}
+                  </p>
+                )}
 
-                <p className="text-xs text-slate-500 mt-0.5">
-                  160, Jalan Pantai, 34350 Kuala Kurau, Perak.
-                </p>
+                {receiptSettings.address && (
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {receiptSettings.address}
+                  </p>
+                )}
 
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Tel: 011-25804449
-                </p>
+                {receiptSettings.phone && (
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Tel: {receiptSettings.phone}
+                  </p>
+                )}
 
                 <p className="font-bold text-sm text-slate-700 mt-3">
-                  收银单 / RECEIPT (补印)
+                  {receiptSettings.receiptTitle} (补印)
                 </p>
               </div>
 
@@ -877,8 +929,7 @@ export default function Reports() {
                   <span className="font-medium text-slate-900">
                     {
                       PAY_NAMES[
-                        reprintOrder
-                          .paymentMethod
+                        reprintOrder.paymentMethod
                       ]
                     }
                   </span>
@@ -965,9 +1016,11 @@ export default function Reports() {
 
               <div className="text-center border-t border-dashed border-slate-300 pt-4 mb-5">
 
-                <p className="font-bold text-xs text-slate-600 mb-1">
-                  Thank you for shopping with us!
-                </p>
+                {receiptSettings.thankYouText && (
+                  <p className="font-bold text-xs text-slate-600 mb-1">
+                    {receiptSettings.thankYouText}
+                  </p>
+                )}
 
                 {reprintOrder.showWarranty &&
                   reprintOrder.warrantyText && (
@@ -1018,6 +1071,12 @@ export default function Reports() {
                               font-family: Arial, sans-serif;
                               padding: 15px;
                               color: black;
+                            }
+
+                            img {
+                              display: block;
+                              margin-left: auto;
+                              margin-right: auto;
                             }
                           </style>
                         </head>
