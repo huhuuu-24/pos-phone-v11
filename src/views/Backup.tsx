@@ -182,7 +182,7 @@ export default function Backup() {
   }
 };
   
-  // =========================
+   // =========================
   // 云端恢复
   // =========================
   const handleCloudRestore = async (backup: CloudBackup) => {
@@ -223,6 +223,39 @@ export default function Backup() {
     } catch (err) {
       console.error(err);
       alert('云端恢复失败，请重试');
+    }
+  };
+
+  // =========================
+  // 删除云端备份
+  // =========================
+  const handleDeleteCloudBackup = async (
+    backupId: number
+  ) => {
+    const confirmed = window.confirm(
+      '确定要删除这份云端备份吗？\n\n删除后无法恢复这份备份。'
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const { error } = await supabase
+        .from('pos_backups')
+        .delete()
+        .eq('id', backupId);
+
+      if (error) {
+        console.error(error);
+        alert('删除失败：' + error.message);
+        return;
+      }
+
+      alert('云端备份已删除');
+
+      await loadCloudBackups();
+    } catch (err) {
+      console.error(err);
+      alert('删除失败，请重试');
     }
   };
 
@@ -414,15 +447,28 @@ export default function Backup() {
 
                       </div>
 
-                      <button
-                        onClick={() =>
-                          handleCloudRestore(backup)
-                        }
-                        className="px-5 py-3 bg-orange-600 hover:bg-orange-500 rounded-lg text-white font-medium flex items-center gap-2"
-                      >
-                        <RotateCcw size={18} />
-                        恢复
-                      </button>
+                     <div className="flex gap-2">
+
+  <button
+    onClick={() =>
+      handleCloudRestore(backup)
+    }
+    className="px-5 py-3 bg-orange-600 hover:bg-orange-500 rounded-lg text-white font-medium flex items-center gap-2"
+  >
+    <RotateCcw size={18} />
+    恢复
+  </button>
+
+  <button
+    onClick={() =>
+      handleDeleteCloudBackup(backup.id)
+    }
+    className="px-5 py-3 bg-red-600 hover:bg-red-500 rounded-lg text-white font-medium"
+  >
+    删除
+  </button>
+
+</div>
 
                     </div>
 
