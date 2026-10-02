@@ -4,6 +4,7 @@ import POS from '@/views/POS';
 import Inventory from '@/views/Inventory';
 import Reports from '@/views/Reports';
 import Backup from '@/views/Backup';
+import Settings from '@/views/Settings';
 import Login from '@/views/Login';
 import { supabase } from '@/lib/supabase';
 import type { View } from '@/types';
@@ -19,20 +20,9 @@ export default function App() {
     let mounted = true;
 
     const checkLogin = async () => {
-      // 读取这台电脑是否已经获得过离线营业权限
       const offlineAccess =
         localStorage.getItem(OFFLINE_ACCESS_KEY) === 'true';
 
-      /*
-       * ==========================================
-       * 断网状态
-       * ==========================================
-       *
-       * 只要这台电脑以前成功登录过，
-       * 断网后直接进入 POS。
-       *
-       * 完全不访问 Supabase。
-       */
       if (!navigator.onLine) {
         if (!mounted) return;
 
@@ -46,13 +36,6 @@ export default function App() {
         return;
       }
 
-      /*
-       * ==========================================
-       * 联网状态
-       * ==========================================
-       *
-       * 联网时正常检查 Supabase Session。
-       */
       try {
         const { data, error } =
           await supabase.auth.getSession();
@@ -65,8 +48,6 @@ export default function App() {
             error
           );
 
-          // 如果以前授权过这台电脑，
-          // 即使 Supabase 暂时异常，也允许进入 POS
           if (offlineAccess) {
             setLoggedIn(true);
           } else {
@@ -78,18 +59,13 @@ export default function App() {
         }
 
         if (data.session) {
-          // 正常联网登录
           setLoggedIn(true);
 
-          // 第一次成功登录后，
-          // 永久记录这台电脑拥有离线营业权限
           localStorage.setItem(
             OFFLINE_ACCESS_KEY,
             'true'
           );
         } else {
-          // 没有当前 Session
-          // 但如果以前授权过，可以进入 POS
           if (offlineAccess) {
             setLoggedIn(true);
           } else {
@@ -106,8 +82,6 @@ export default function App() {
 
         if (!mounted) return;
 
-        // 网络错误 / Supabase 无法访问
-        // 只要这台电脑以前授权过，就允许离线营业
         if (offlineAccess) {
           setLoggedIn(true);
         } else {
@@ -120,9 +94,6 @@ export default function App() {
 
     checkLogin();
 
-    /*
-     * 监听 Supabase 登录状态
-     */
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
@@ -132,7 +103,6 @@ export default function App() {
         if (session) {
           setLoggedIn(true);
 
-          // 成功登录后记录本机离线权限
           localStorage.setItem(
             OFFLINE_ACCESS_KEY,
             'true'
@@ -147,9 +117,6 @@ export default function App() {
     };
   }, []);
 
-  /*
-   * 正在检查
-   */
   if (checking) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-950">
@@ -160,14 +127,10 @@ export default function App() {
     );
   }
 
-  /*
-   * 没有登录
-   */
   if (!loggedIn) {
     return (
       <Login
         onLogin={() => {
-          // 登录成功后获得本机离线营业权限
           localStorage.setItem(
             OFFLINE_ACCESS_KEY,
             'true'
@@ -179,33 +142,30 @@ export default function App() {
     );
   }
 
-  /*
-   * POS 主界面
-   */
   return (
     <div className="flex h-screen bg-slate-950 overflow-hidden">
       <Sidebar
         current={view}
         onChange={setView}
         onLogout={() => {
-          /*
-           * 注意：
-           * 这里只退出当前账号 Session。
-           *
-           * 不删除：
-           * phone-store-pos-offline-access
-           *
-           * 所以以后断网仍然可以营业。
-           */
           setLoggedIn(false);
         }}
       />
 
       <main className="flex-1 overflow-hidden">
         {view === 'pos' && <POS />}
+
         {view === 'inventory' && <Inventory />}
+
         {view === 'reports' && <Reports />}
+
         {view === 'backup' && <Backup />}
+
+        {view === 'settings' && (
+          <Settings
+            onClose={() => setView('pos')}
+          />
+        )}
       </main>
     </div>
   );
