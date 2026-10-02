@@ -20,32 +20,36 @@ export default function App() {
 
     const checkLogin = async () => {
       try {
-        // 先检查本机是否已经成功登录过
         const offlineAccess =
           localStorage.getItem(OFFLINE_ACCESS_KEY) === 'true';
 
-        // 检查 Supabase 当前 Session
+        const isOnline = navigator.onLine;
+
         const {
           data: { session },
         } = await supabase.auth.getSession();
 
         if (!mounted) return;
 
+        // 有有效 Supabase Session
         if (session) {
-          // 有有效 Session
           setLoggedIn(true);
 
-          // 确保这台电脑拥有离线使用权限
+          // 记录这台电脑已经获得过离线营业权限
           localStorage.setItem(
             OFFLINE_ACCESS_KEY,
             'true'
           );
-        } else if (offlineAccess) {
-          // 没有 Session，但这台电脑之前成功登录过
+        }
+
+        // 没网络 + 以前成功登录过
+        else if (!isOnline && offlineAccess) {
           // 允许离线进入 POS
           setLoggedIn(true);
-        } else {
-          // 从来没有登录过
+        }
+
+        // 有网络但已经登出
+        else {
           setLoggedIn(false);
         }
 
@@ -55,11 +59,11 @@ export default function App() {
 
         if (!mounted) return;
 
-        // 即使 Supabase 检查失败，
-        // 只要这台电脑以前成功登录过，就允许离线使用
         const offlineAccess =
           localStorage.getItem(OFFLINE_ACCESS_KEY) === 'true';
 
+        // 如果检查 Supabase 失败，同时本机有离线授权
+        // 就允许进入 POS
         setLoggedIn(offlineAccess);
         setChecking(false);
       }
@@ -104,6 +108,7 @@ export default function App() {
     return (
       <Login
         onLogin={() => {
+          // 登录成功后，记录本机离线营业权限
           localStorage.setItem(
             OFFLINE_ACCESS_KEY,
             'true'
@@ -120,9 +125,11 @@ export default function App() {
       <Sidebar
         current={view}
         onChange={setView}
-         onLogout={() => {
-    setLoggedIn(false);
-  }}
+        onLogout={() => {
+          // 注意：
+          // 登出账号，但不删除本机离线营业权限
+          setLoggedIn(false);
+        }}
       />
 
       <main className="flex-1 overflow-hidden">
