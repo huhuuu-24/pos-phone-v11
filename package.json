@@ -1,7 +1,7 @@
 {
   "name": "vite-react-typescript-starter",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "electron/main.js",
 
@@ -44,17 +44,45 @@
 
   "build": {
     "appId": "com.dreammobile.pos",
-    "productName": "PhoneStorePOS",
+    "productName": "Phone Store POS",
+
     "directories": {
       "output": "release"
     },
+
     "files": [
       "dist/**/*",
       "electron/**/*"
     ],
+
     "win": {
       "target": "nsis",
       "icon": "build/icon.ico"
-    }
+    },
+
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+
+      "shortcutName": "Phone Store POS",
+
+      "installerLanguages": [
+        "zh_CN",
+        "en_US"
+      ],
+
+      "language": 2052,
+
+      "runAfterFinish": true,
+
+      "deleteAppDataOnUninstall": false
+    },
+
+    "artifactName": "PhoneStorePOS-Setup-${version}.${ext}"
   }
 }
