@@ -4,6 +4,7 @@ import {
   BarChart3,
   Smartphone,
   Database,
+  Settings,
   LogOut,
 } from 'lucide-react';
 import type { View } from '@/types';
@@ -39,6 +40,12 @@ const navItems: {
     view: 'backup',
     label: '数据备份',
     icon: <Database size={20} />,
+  },
+  {
+    // 暂时用类型转换，避免影响你现有稳定代码
+    view: 'settings' as View,
+    label: '店铺设置',
+    icon: <Settings size={20} />,
   },
 ];
 
@@ -98,7 +105,7 @@ export default function Sidebar({
 
             return (
               <button
-                key={view}
+                key={String(view)}
                 onClick={() => onChange(view)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
                   active
