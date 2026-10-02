@@ -120,6 +120,9 @@ export default function App() {
       <Sidebar
         current={view}
         onChange={setView}
+         onLogout={() => {
+    setLoggedIn(false);
+  }}
       />
 
       <main className="flex-1 overflow-hidden">
