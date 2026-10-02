@@ -1,8 +1,18 @@
-import { ShoppingCart, Package, BarChart3, Smartphone, Database, LogOut, } from 'lucide-react';
+import {
+  ShoppingCart,
+  Package,
+  BarChart3,
+  Smartphone,
+  Database,
+  LogOut,
+} from 'lucide-react';
 import type { View } from '@/types';
 import { supabase } from '@/lib/supabase';
 
-interface SidebarProps { current: View; onChange: (v: View) => void; onLogout: () => void;
+interface SidebarProps {
+  current: View;
+  onChange: (v: View) => void;
+  onLogout: () => void;
 }
 
 const navItems: {
@@ -39,22 +49,19 @@ export default function Sidebar({
 }: SidebarProps) {
   const handleLogout = async () => {
     const confirmed = window.confirm(
-      '确定要退出登录吗？\n\n退出后，这台电脑将暂时不能离线进入 POS。'
+      '确定要退出登录吗？\n\n退出账号不会影响这台电脑的离线营业功能。'
     );
 
     if (!confirmed) return;
 
-    // 清除本机离线登录权限
-    localStorage.removeItem(
-      'phone-store-pos-offline-access'
-    );
-
     try {
-      // 有网络时正常退出 Supabase
-      await supabase.auth.signOut();
+      // 只退出当前 Supabase Session
+      // 不删除本机离线营业权限
+      await supabase.auth.signOut({
+        scope: 'local',
+      });
     } catch (error) {
-      // 没网络时可能会失败，但本机权限已经清除
-      console.error('Supabase 登出失败:', error);
+      console.error('退出登录失败:', error);
     }
 
     // 无论有没有网络，都回到登录页面
