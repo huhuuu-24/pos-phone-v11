@@ -94,48 +94,94 @@ export default function Backup() {
   // 云端备份
   // =========================
   const handleCloudBackup = async () => {
-    if (cloudLoading) return;
+  if (cloudLoading) return;
 
-    try {
-      setCloudLoading(true);
+  try {
+    setCloudLoading(true);
 
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-      if (userError || !user) {
-        alert('登录状态已失效，请重新登录');
-        return;
-      }
-
-      const backupData = await exportDatabase();
-
-      const { error } = await supabase
-        .from('pos_backups')
-        .insert({
-          user_id: user.id,
-          backup_data: backupData,
-        });
-
-      if (error) {
-        console.error(error);
-        alert('云端备份失败：' + error.message);
-        return;
-      }
-
-      alert('☁️ 云端备份成功');
-
-      // 备份成功后重新加载记录
-      await loadCloudBackups();
-    } catch (err) {
-      console.error(err);
-      alert('云端备份失败，请重试');
-    } finally {
-      setCloudLoading(false);
+    if (userError || !user) {
+      alert('登录状态已失效，请重新登录');
+      return;
     }
-  };
 
+    const backupData = await exportDatabase();
+
+    // 1. 上传新的云端备份
+    const { error: insertError } = await supabase
+      .from('pos_backups')
+      .insert({
+        user_id: user.id,
+        backup_data: backupData,
+      });
+
+    if (insertError) {
+      console.error(insertError);
+      alert('云端备份失败：' + insertError.message);
+      return;
+    }
+
+    // 2. 读取这个用户全部备份
+    const { data: allBackups, error: loadError } = await supabase
+      .from('pos_backups')
+      .select('id, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (loadError) {
+      console.error(loadError);
+
+      alert(
+        '云端备份已经成功，但自动清理旧备份失败：' +
+        loadError.message
+      );
+
+      await loadCloudBackups();
+      return;
+    }
+
+    // 3. 如果超过 10 份，删除最旧的
+    if (allBackups && allBackups.length > 10) {
+      const oldBackups = allBackups.slice(10);
+
+      const oldIds = oldBackups.map((backup) => backup.id);
+
+      const { error: deleteError } = await supabase
+        .from('pos_backups')
+        .delete()
+        .in('id', oldIds)
+        .eq('user_id', user.id);
+
+      if (deleteError) {
+        console.error(deleteError);
+
+        alert(
+          '云端备份已经成功，但删除旧备份失败：' +
+          deleteError.message
+        );
+
+        await loadCloudBackups();
+        return;
+      }
+    }
+
+    alert('☁️ 云端备份成功');
+
+    // 4. 重新加载云端记录
+    await loadCloudBackups();
+
+  } catch (err) {
+    console.error(err);
+    alert('云端备份失败，请重试');
+  } finally {
+    setCloudLoading(false);
+  }
+};
+  
   // =========================
   // 云端恢复
   // =========================
