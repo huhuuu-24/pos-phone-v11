@@ -152,7 +152,7 @@ export default function App() {
         }}
       />
 
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1 overflow-y-auto min-h-0">
         {view === 'pos' && <POS />}
 
         {view === 'inventory' && <Inventory />}
