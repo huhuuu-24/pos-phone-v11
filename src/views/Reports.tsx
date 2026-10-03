@@ -549,50 +549,49 @@ export default function Reports() {
         </div>
 
         {loading ? (
-          <div className="py-16 text-center text-slate-500">
-            加载中...
-          </div>
-        ) : orders.length === 0 ? (
-          <div className="py-16 text-center text-slate-600">
-            <ShoppingBag
-              size={48}
-              strokeWidth={1}
-              className="mx-auto mb-3"
-            />
+  <div className="py-16 text-center text-slate-500">
+    加载中...
+  </div>
+) : orders.length === 0 ? (
+  <div className="py-16 text-center text-slate-600">
+    <ShoppingBag
+      size={48}
+      strokeWidth={1}
+      className="mx-auto mb-3"
+    />
 
-            <p>
-              该时间段暂无交易记录
-            </p>
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-800">
-            {orders.map((order) => (
-              <OrderRow
-                key={order.id}
-                order={order}
-                showDate={tab !== 'today'}
-                onReprint={() =>
-                  setReprintOrder(order)
-                }
-                onDelete={async () => {
-                  if (!order.id) return;
+    <p>
+      该时间段暂无交易记录
+    </p>
+  </div>
+) : (
+  <div className="max-h-[650px] overflow-y-auto">
+    <div className="divide-y divide-slate-800">
+      {orders.map((order) => (
+        <OrderRow
+          key={order.id}
+          order={order}
+          showDate={tab !== 'today'}
+          onReprint={() =>
+            setReprintOrder(order)
+          }
+          onDelete={async () => {
+            if (!order.id) return;
 
-                  const ok = confirm(
-                    `确定删除订单 #${order.id}？\n\n库存会自动恢复。`
-                  );
+            const ok = confirm(
+              `确定删除订单 #${order.id}？\n\n库存会自动恢复。`
+            );
 
-                  if (!ok) return;
+            if (!ok) return;
 
-                  await deleteOrder(
-                    order.id
-                  );
-
-                  await load();
-                }}
-              />
-            ))}
-          </div>
-        )}
+            await deleteOrder(order.id);
+            await load();
+          }}
+        />
+      ))}
+    </div>
+  </div>
+)}
       </div>
 
       {/* Reprint Receipt Modal */}
