@@ -381,7 +381,7 @@ export default function Reports() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-8">
+    <div className="h-full bg-slate-950 text-white p-8 overflow-y-auto">
 
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
