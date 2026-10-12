@@ -278,10 +278,11 @@ export const CATEGORY_LABELS: Record<ProductCategory, string> = {
   other: '其他'
 };
 
+
 export async function deleteOrder(orderId: number): Promise<void> {
   const db = await openDB();
 
-  // 找订单
+  // 先读取订单
   const orderTx = db.transaction('orders', 'readonly');
   const order = await request<Order>(
     orderTx.objectStore('orders').get(orderId)
@@ -289,23 +290,21 @@ export async function deleteOrder(orderId: number): Promise<void> {
 
   if (!order) return;
 
-  // 恢复库存与IMEI
+  // 恢复正常订单的库存与 IMEI
   for (const item of order.items) {
-    // 配件恢复库存
+    // 一次性订单或一次性项目，不影响库存
+    if (order.orderType === 'one-time' || item.isOneTimeItem) {
+      continue;
+    }
+
+    // 配件、服务恢复库存
     if (item.category !== 'phone') {
       await adjustStock(item.productId, item.quantity);
     }
 
-    // 手机恢复IMEI
-    if (
-      item.category === 'phone' &&
-      item.imeiId
-    ) {
-      const tx = db.transaction(
-        'imeis',
-        'readwrite'
-      );
-
+    // 手机恢复 IMEI
+    if (item.category === 'phone' && item.imeiId) {
+      const tx = db.transaction('imeis', 'readwrite');
       const store = tx.objectStore('imeis');
 
       const imei = await request<IMEIRecord>(
@@ -318,22 +317,17 @@ export async function deleteOrder(orderId: number): Promise<void> {
             ...imei,
             status: 'available',
             orderId: undefined,
-            soldAt: undefined
+            soldAt: undefined,
           })
         );
       }
     }
   }
 
-  // 删除订单
-  const deleteTx = db.transaction(
-    'orders',
-    'readwrite'
-  );
+  // 删除订单记录
+  const deleteTx = db.transaction('orders', 'readwrite');
 
   await request(
-    deleteTx
-      .objectStore('orders')
-      .delete(orderId)
+    deleteTx.objectStore('orders').delete(orderId)
   );
 }
