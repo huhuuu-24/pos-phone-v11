@@ -29,6 +29,15 @@ function createRow(): BillRow {
   };
 }
 
+function getLocalDateString() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
 const PAYMENT_OPTIONS: {
   value: PaymentMethod;
   label: string;
@@ -40,6 +49,7 @@ const PAYMENT_OPTIONS: {
 
 export default function OneTimeBill() {
   const [rows, setRows] = useState<BillRow[]>([createRow()]);
+  const [billDate, setBillDate] = useState(getLocalDateString());
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>('cash');
   const [saving, setSaving] = useState(false);
@@ -106,6 +116,7 @@ export default function OneTimeBill() {
   const resetForm = () => {
     setRows([createRow()]);
     setPaymentMethod('cash');
+    setBillDate(getLocalDateString());
     setSuccessMessage('');
   };
 
@@ -184,7 +195,7 @@ export default function OneTimeBill() {
         paymentMethod,
         totalAmount: Number(totalAmount.toFixed(2)),
         totalProfit: Number(totalProfit.toFixed(2)),
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(`${billDate}T12:00:00`).toISOString(),
         orderType: 'one-time',
       });
 
@@ -213,16 +224,34 @@ export default function OneTimeBill() {
                 <ReceiptText size={26} />
               </div>
 
-              <div>
-                <h1 className="text-2xl font-bold">
-                  一次性开单
-                </h1>
-                <p className="mt-1 text-sm text-slate-400">
-                  临时商品或服务，无需建立库存商品
-                </p>
-              </div>
-            </div>
-          </div>
+              
+<div>
+  <h1 className="text-2xl font-bold">
+    一次性开单
+  </h1>
+
+  <p className="mt-1 text-sm text-slate-400">
+    临时商品或服务，无需建立库存商品
+  </p>
+
+  {/* 开单日期 */}
+  <div className="mt-4">
+    <label className="mb-2 block text-sm text-slate-400">
+      开单日期
+    </label>
+
+    <input
+      type="date"
+      value={billDate}
+      onChange={(event) => {
+        setBillDate(event.target.value);
+        setSuccessMessage('');
+      }}
+      required
+      className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+    />
+  </div>
+</div>
 
           <button
             type="button"
