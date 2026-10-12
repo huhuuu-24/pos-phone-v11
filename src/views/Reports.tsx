@@ -66,6 +66,23 @@ function fmt(n: number) {
   return n.toFixed(2);
 }
 
+
+function itemDisplayName(item: Order['items'][number]) {
+  if (item.isOneTimeItem) {
+    return item.model || '一次性项目';
+  }
+
+  return `${item.brand} ${item.model}`.trim();
+}
+
+function itemCategoryLabel(item: Order['items'][number]) {
+  if (item.isOneTimeItem) {
+    return '一次性项目';
+  }
+
+  return CATEGORY_LABELS[item.category];
+}
+
 function timeStr(iso: string) {
   return new Date(iso).toLocaleTimeString('zh-CN', {
     hour: '2-digit',
@@ -110,8 +127,8 @@ function exportExcel(orders: Order[]) {
           `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ` +
           `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 
-        const name = `${item.brand} ${item.model}`;
-        const catLabel = CATEGORY_LABELS[item.category];
+        const name = itemDisplayName(item);
+        const catLabel = itemCategoryLabel(item);
         const imeiOrBarcode = item.imei || '—';
 
         const cost = item.costPrice * item.quantity;
@@ -579,8 +596,10 @@ export default function Reports() {
             if (!order.id) return;
 
             const ok = confirm(
-              `确定删除订单 #${order.id}？\n\n库存会自动恢复。`
-            );
+              order.orderType === 'one-time'
+    ? `确定删除一次性订单 #${order.id}？\n\n此订单不会影响库存。`
+    : `确定删除订单 #${order.id}？\n\n正常商品的库存或 IMEI 将按原逻辑恢复。`
+);
 
             if (!ok) return;
 
@@ -731,8 +750,9 @@ export default function Reports() {
                         fontWeight: 'bold',
                       }}
                     >
-                      {item.brand}{' '}
-                      {item.model}
+                      {item.isOneTimeItem
+                        ? item.model
+                        : `${item.brand} ${item.model}`.trim()}
                     </div>
 
                     <div
@@ -1224,8 +1244,7 @@ function OrderRow({
             <span className="text-white font-medium text-sm">
               {order.items
                 .map(
-                  (item) =>
-                    `${item.brand} ${item.model}`
+                  (item) => itemDisplayName(item)
                 )
                 .join('、')}
             </span>
@@ -1325,8 +1344,7 @@ function OrderRow({
                 >
 
                   <span className="col-span-3 text-white font-medium">
-                    {item.brand}{' '}
-                    {item.model}
+                    {itemDisplayName(item)}
                   </span>
 
                   <span className="col-span-2">
@@ -1336,8 +1354,7 @@ function OrderRow({
                     >
                       {
                         CATEGORY_LABELS[
-                          item.category
-                        ]
+                          item.category(item) ]
                       }
                     </span>
 
