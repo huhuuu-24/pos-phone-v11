@@ -1,11 +1,15 @@
+
 import { useEffect, useState } from 'react';
+
 import Sidebar from '@/components/Sidebar';
 import POS from '@/views/POS';
+import OneTimeBill from '@/views/OneTimeBill';
 import Inventory from '@/views/Inventory';
 import Reports from '@/views/Reports';
 import Backup from '@/views/Backup';
 import Settings from '@/views/Settings';
 import Login from '@/views/Login';
+
 import { supabase } from '@/lib/supabase';
 import type { View } from '@/types';
 
@@ -26,68 +30,37 @@ export default function App() {
       if (!navigator.onLine) {
         if (!mounted) return;
 
-        if (offlineAccess) {
-          setLoggedIn(true);
-        } else {
-          setLoggedIn(false);
-        }
-
+        setLoggedIn(offlineAccess);
         setChecking(false);
         return;
       }
 
       try {
-        const { data, error } =
-          await supabase.auth.getSession();
+        const { data, error } = await supabase.auth.getSession();
 
         if (!mounted) return;
 
         if (error) {
-          console.error(
-            'Supabase Session 检查失败:',
-            error
-          );
-
-          if (offlineAccess) {
-            setLoggedIn(true);
-          } else {
-            setLoggedIn(false);
-          }
-
+          console.error('Supabase Session 检查失败:', error);
+          setLoggedIn(offlineAccess);
           setChecking(false);
           return;
         }
 
         if (data.session) {
           setLoggedIn(true);
-
-          localStorage.setItem(
-            OFFLINE_ACCESS_KEY,
-            'true'
-          );
+          localStorage.setItem(OFFLINE_ACCESS_KEY, 'true');
         } else {
-          if (offlineAccess) {
-            setLoggedIn(true);
-          } else {
-            setLoggedIn(false);
-          }
+          setLoggedIn(offlineAccess);
         }
 
         setChecking(false);
       } catch (error) {
-        console.error(
-          '登录状态检查失败:',
-          error
-        );
+        console.error('登录状态检查失败:', error);
 
         if (!mounted) return;
 
-        if (offlineAccess) {
-          setLoggedIn(true);
-        } else {
-          setLoggedIn(false);
-        }
-
+        setLoggedIn(offlineAccess);
         setChecking(false);
       }
     };
@@ -96,20 +69,14 @@ export default function App() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (!mounted) return;
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
 
-        if (session) {
-          setLoggedIn(true);
-
-          localStorage.setItem(
-            OFFLINE_ACCESS_KEY,
-            'true'
-          );
-        }
+      if (session) {
+        setLoggedIn(true);
+        localStorage.setItem(OFFLINE_ACCESS_KEY, 'true');
       }
-    );
+    });
 
     return () => {
       mounted = false;
@@ -131,11 +98,7 @@ export default function App() {
     return (
       <Login
         onLogin={() => {
-          localStorage.setItem(
-            OFFLINE_ACCESS_KEY,
-            'true'
-          );
-
+          localStorage.setItem(OFFLINE_ACCESS_KEY, 'true');
           setLoggedIn(true);
         }}
       />
@@ -147,13 +110,13 @@ export default function App() {
       <Sidebar
         current={view}
         onChange={setView}
-        onLogout={() => {
-          setLoggedIn(false);
-        }}
+        onLogout={() => setLoggedIn(false)}
       />
 
       <main className="flex-1 overflow-y-auto min-h-0">
         {view === 'pos' && <POS />}
+
+        {view === 'one-time' && <OneTimeBill />}
 
         {view === 'inventory' && <Inventory />}
 
@@ -162,9 +125,7 @@ export default function App() {
         {view === 'backup' && <Backup />}
 
         {view === 'settings' && (
-          <Settings
-            onClose={() => setView('pos')}
-          />
+          <Settings onClose={() => setView('pos')} />
         )}
       </main>
     </div>
