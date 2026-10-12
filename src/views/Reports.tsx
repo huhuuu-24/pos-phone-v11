@@ -760,14 +760,13 @@ export default function Reports() {
                         color: '#666',
                       }}
                     >
-                      类型:{' '}
-                      {
-                        CATEGORY_LABELS[
-                          item.category
-                        ]
-                      }{' '}
-                      | 数量:{' '}
-                      {item.quantity}
+                     类型:{' '}
+                     {item.isOneTimeItem
+                     ? '一次性项目'
+                     : CATEGORY_LABELS[item.category]}
+                     {' '}
+                     | 数量:{' '}
+                     {item.quantity}
                     </div>
 
                     {item.category ===
@@ -981,16 +980,15 @@ export default function Reports() {
                       <div className="col-span-7">
 
                         <div className="font-medium text-slate-900">
-                          {item.brand}{' '}
-                          {item.model}
+                          {item.isOneTimeItem
+                          ? item.model
+                          : `${item.brand} ${item.model}`.trim()}
                         </div>
 
                         <div className="text-xs text-slate-400 mt-0.5">
-                          {
-                            CATEGORY_LABELS[
-                              item.category
-                            ]
-                          }
+                         {item.isOneTimeItem
+                         ? '一次性项目'
+                         : CATEGORY_LABELS[item.category]}
                         </div>
 
                         {item.category ===
