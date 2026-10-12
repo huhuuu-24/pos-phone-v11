@@ -216,52 +216,53 @@ export default function OneTimeBill() {
 
   return (
     <div className="min-h-full bg-slate-950 p-5 text-white md:p-8">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-500/15 text-blue-400">
-                <ReceiptText size={26} />
-              </div>
+      <div className="mx-auto max-w-6xl space-y-6">       
+<div className="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <div className="flex items-center gap-3">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-500/15 text-blue-400">
+        <ReceiptText size={26} />
+      </div>
 
-              
-<div>
-  <h1 className="text-2xl font-bold">
-    一次性开单
-  </h1>
+      <div>
+        <h1 className="text-2xl font-bold">
+          一次性开单
+        </h1>
 
-  <p className="mt-1 text-sm text-slate-400">
-    临时商品或服务，无需建立库存商品
-  </p>
+        <p className="mt-1 text-sm text-slate-400">
+          临时商品或服务，无需建立库存商品
+        </p>
+      </div>
+    </div>
 
-  {/* 开单日期 */}
-  <div className="mt-4">
-    <label className="mb-2 block text-sm text-slate-400">
-      开单日期
-    </label>
+    {/* 开单日期 */}
+    <div className="mt-4">
+      <label className="mb-2 block text-sm text-slate-400">
+        开单日期
+      </label>
 
-    <input
-      type="date"
-      value={billDate}
-      onChange={(event) => {
-        setBillDate(event.target.value);
-        setSuccessMessage('');
-      }}
-      required
-      className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
-    />
+      <input
+        type="date"
+        value={billDate}
+        onChange={(event) => {
+          setBillDate(event.target.value);
+          setSuccessMessage('');
+        }}
+        required
+        className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+      />
+    </div>
   </div>
-</div>
 
-          <button
-            type="button"
-            onClick={resetForm}
-            className="flex items-center gap-2 rounded-xl border border-slate-700 px-4 py-2.5 text-sm text-slate-300 transition hover:bg-slate-800"
-          >
-            <ArrowLeft size={17} />
-            清空重开
-          </button>
-        </div>
+  <button
+    type="button"
+    onClick={resetForm}
+    className="flex items-center gap-2 rounded-xl border border-slate-700 px-4 py-2.5 text-sm text-slate-300 transition hover:bg-slate-800"
+  >
+    <ArrowLeft size={17} />
+    清空重开
+  </button>
+</div>
 
         {successMessage && (
           <div className="flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-300">
