@@ -180,7 +180,7 @@ export default function OneTimeBill() {
         category: 'service',
         imeiId: null,
         imei: '',
-        brand: '一次性项目',
+        brand: row.name.trim(),
         model: row.name.trim(),
         color: '',
         config: '',
