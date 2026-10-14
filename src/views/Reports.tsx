@@ -758,13 +758,13 @@ export default function Reports() {
                         color: '#666',
                       }}
                     >
-                     类型:{' '}
-                     {item.isOneTimeItem
-                     ? '一次性项目'
-                     : CATEGORY_LABELS[item.category]}
-                     {' '}
-                     | 数量:{' '}
-                     {item.quantity}
+                     {!item.isOneTimeItem && (
+                      <>
+                     类型: {CATEGORY_LABELS[item.category]}{' '}
+                     |{' '}
+                     </>
+                     )}
+                     数量: {item.quantity}
                     </div>
 
                     {item.category ===
@@ -983,11 +983,11 @@ export default function Reports() {
                           : `${item.brand} ${item.model}`.trim()}
                         </div>
 
+                        {!item.isOneTimeItem && (
                         <div className="text-xs text-slate-400 mt-0.5">
-                         {item.isOneTimeItem
-                         ? '一次性项目'
-                         : CATEGORY_LABELS[item.category]}
+                        {CATEGORY_LABELS[item.category]}
                         </div>
+                      )}
 
                         {item.category ===
                           'phone' &&
