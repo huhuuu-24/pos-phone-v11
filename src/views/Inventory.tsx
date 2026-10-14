@@ -78,6 +78,9 @@ export default function Inventory() {
 
   const [editCostPrice, setEditCostPrice] = useState('');
   const [editSellingPrice, setEditSellingPrice] = useState('');
+  const [editSku, setEditSku] = useState('');
+  const [editBrand, setEditBrand] = useState('');
+  const [editModel, setEditModel] = useState('');
 
   const [imeis, setImeis] = useState<IMEIRecord[]>([]);
   const [newImei, setNewImei] = useState('');
@@ -127,6 +130,10 @@ export default function Inventory() {
 
     setEditCostPrice(product.costPrice.toString());
     setEditSellingPrice(product.sellingPrice.toString());
+
+    setEditSku(product.sku ?? '');
+    setEditBrand(product.brand ?? '');
+    setEditModel(product.model ?? '');
     setStockQty('1');
 
     if (product.category === 'phone') {
@@ -377,11 +384,11 @@ export default function Inventory() {
     }
 
     const updatedProduct = {
-      sku: selected.sku,
+      sku: editSku.trim(),
       id: selected.id,
       category: selected.category,
-      brand: selected.brand,
-      model: selected.model,
+      brand: editBrand.trim(),
+      model: editModel.trim(),
       color: selected.color,
       config: selected.config,
       barcode: selected.barcode,
@@ -1054,6 +1061,46 @@ export default function Inventory() {
 
                   </div>
 
+                  {/* 修改商品资料 */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 max-w-4xl">
+
+                 <div>
+                  <label className="text-slate-400 text-sm block mb-1">
+                   商品编号 SKU
+                </label>
+               <input
+                type="text"
+                 value={editSku}
+                 onChange={(e) => setEditSku(e.target.value)}
+                 className="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2 text-white"
+                    />
+               </div>
+
+  <div>
+    <label className="text-slate-400 text-sm block mb-1">
+      品牌
+    </label>
+    <input
+      type="text"
+      value={editBrand}
+      onChange={(e) => setEditBrand(e.target.value)}
+      className="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2 text-white"
+    />
+  </div>
+
+  <div>
+    <label className="text-slate-400 text-sm block mb-1">
+      型号 / 商品名称
+    </label>
+    <input
+      type="text"
+      value={editModel}
+      onChange={(e) => setEditModel(e.target.value)}
+      className="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2 text-white"
+    />
+  </div>
+
+</div>
                   {/* 修改价格 */}
                   <div className="grid grid-cols-2 gap-4 mt-4 max-w-xl">
 
