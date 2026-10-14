@@ -753,6 +753,12 @@ export default function Reports() {
                         : `${item.brand} ${item.model}`.trim()}
                     </div>
 
+                      {item.imei && (
+                     <div style={{ color: '#666', fontSize: '12px' }}>
+                      IMEI: {item.imei}
+                    </div>
+                     )}
+
                     <div
                       style={{
                         color: '#666',
@@ -982,6 +988,12 @@ export default function Reports() {
                           ? item.model
                           : `${item.brand} ${item.model}`.trim()}
                         </div>
+
+                          {item.imei && (
+                        <div className="mt-0.5 text-xs text-slate-500">
+                           IMEI: {item.imei}
+                        </div>
+                      )}
 
                         {!item.isOneTimeItem && (
                         <div className="text-xs text-slate-400 mt-0.5">
