@@ -14,6 +14,7 @@ import type { OrderItem, PaymentMethod } from '@/types';
 interface BillRow {
   id: number;
   name: string;
+  imei: string;
   quantity: number;
   costPrice: string;
   sellingPrice: string;
@@ -23,6 +24,7 @@ function createRow(): BillRow {
   return {
     id: Date.now() + Math.floor(Math.random() * 100000),
     name: '',
+    imei: '',
     quantity: 1,
     costPrice: '0',
     sellingPrice: '0',
@@ -176,19 +178,19 @@ export default function OneTimeBill() {
 
     try {
       const items: OrderItem[] = rows.map((row) => ({
-        productId: 0,
-        category: 'service',
-        imeiId: null,
-        imei: '',
-        brand: row.name.trim(),
-        model: row.name.trim(),
-        color: '',
-        config: '',
-        quantity: Number(row.quantity),
-        sellingPrice: Number(Number(row.sellingPrice).toFixed(2)),
-        costPrice: Number(Number(row.costPrice).toFixed(2)),
-        isOneTimeItem: true,
-      }));
+  productId: 0,
+  category: 'service',
+  imeiId: null,
+  imei: row.imei.trim(),
+  brand: row.name.trim(),
+  model: row.name.trim(),
+  color: '',
+  config: '',
+  quantity: Number(row.quantity),
+  sellingPrice: Number(Number(row.sellingPrice).toFixed(2)),
+  costPrice: Number(Number(row.costPrice).toFixed(2)),
+  isOneTimeItem: true,
+}));
 
       await addOrder({
         items,
@@ -312,7 +314,7 @@ export default function OneTimeBill() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
                   <div className="sm:col-span-2 lg:col-span-1">
                     <label className="mb-2 block text-xs text-slate-400">
                       项目名称
@@ -327,6 +329,21 @@ export default function OneTimeBill() {
                       className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-3 text-sm text-white outline-none focus:border-blue-500"
                     />
                   </div>
+
+               <div>
+                 <label className="mb-2 block text-xs text-slate-400">
+                   IMEI（选填）
+                 </label>
+                 <input
+                   type="text"
+                   value={row.imei}
+                   onChange={(event) =>
+                        updateRow(row.id, 'imei', event.target.value)
+                   }
+                      placeholder="输入手机 IMEI"
+                      className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-3 text-sm text-white outline-none focus:border-blue-500"
+                    />
+                </div>
 
                   <div>
                     <label className="mb-2 block text-xs text-slate-400">
