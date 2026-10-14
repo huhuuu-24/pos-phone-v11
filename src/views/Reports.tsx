@@ -236,27 +236,25 @@ function exportExcel(orders: Order[]) {
   }
 }
 
-/* =========================
-   日期筛选
-========================= */
+/* =========================日期筛选========================= */
 
 function sameDay(iso: string, dateStrValue: string) {
-  return (
-    new Date(iso).toISOString().slice(0, 10) ===
-    dateStrValue
-  );
+  const date = new Date(iso);
+  const localDate =
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+  return localDate === dateStrValue;
 }
 
 function sameMonth(iso: string, monthStr: string) {
-  return (
-    new Date(iso).toISOString().slice(0, 7) ===
-    monthStr
-  );
+  const date = new Date(iso);
+  const localMonth =
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+  return localMonth === monthStr;
 }
 
-/* =========================
-   Reports
-========================= */
+/* =========================Reports========================= */
 
 export default function Reports() {
   const [tab, setTab] = useState<Tab>('today');
@@ -1352,7 +1350,7 @@ function OrderRow({
                     >
                       {
                         CATEGORY_LABELS[
-                          item.category(item) ]
+                          itemcategory(item) ]
                       }
                     </span>
 
